@@ -103,6 +103,38 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
     return Math.max(...person.publications.map((pub) => pub.publication_year));
   };
 
+  const categorizePublicationType = (type: string | undefined): string => {
+    if (!type) return 'Other';
+    const lowerType = type.toLowerCase();
+
+    if (lowerType.includes('book')) return 'Books';
+    if (lowerType.includes('conference') || lowerType.includes('proceeding')) return 'Conference Papers';
+    if (lowerType.includes('ranked') || lowerType.includes('q1') || lowerType.includes('q2')) {
+      return 'Ranked Refereed Journals';
+    }
+    if (lowerType.includes('journal') || lowerType.includes('article')) {
+      return 'Non-Ranked Refereed Journals';
+    }
+    return 'Other';
+  };
+
+  const getPublicationsByType = (person: PersonData) => {
+    const counts = {
+      'Books': 0,
+      'Ranked Refereed Journals': 0,
+      'Non-Ranked Refereed Journals': 0,
+      'Conference Papers': 0,
+      'Other': 0,
+    };
+
+    person.publications.forEach((pub) => {
+      const category = categorizePublicationType(pub.publication_type);
+      counts[category as keyof typeof counts]++;
+    });
+
+    return counts;
+  };
+
   const getHighestDegree = (person: PersonData) => {
     const degreeOrder = ['BSc', 'BA', 'MSc', 'MA', 'MBA', 'PhD', 'PostDoc'];
     const degrees = person.education.map((edu) => edu.degree_type || '');
@@ -512,6 +544,7 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
             const lastPubYear = getLastPublicationYear(person);
             const isRecentlyActive = lastPubYear && new Date().getFullYear() - lastPubYear <= 2;
             const isProlific = person.publications.length >= 50;
+            const pubsByType = getPublicationsByType(person);
 
             return (
               <div
@@ -557,21 +590,52 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
                 </div>
 
                 <div className="space-y-2 text-sm text-slate-700 mb-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="flex items-center gap-1">
                       <GraduationCap className="w-4 h-4 text-cyan-600" />
                       {getHighestDegree(person) || 'N/A'}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <BookOpen className="w-4 h-4 text-emerald-600" />
-                      {person.publications.length} pubs
-                    </span>
-                  </div>
-                  {lastPubYear && (
-                    <div className="flex items-center justify-between">
+                    {lastPubYear && (
                       <span className="text-xs text-slate-500">Last pub: {lastPubYear}</span>
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  <div className="text-xs space-y-1 bg-slate-50 p-2 rounded">
+                    <div className="font-semibold text-slate-600 mb-1">Publications:</div>
+                    {pubsByType.Books > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Books:</span>
+                        <span className="font-medium text-slate-800">{pubsByType.Books}</span>
+                      </div>
+                    )}
+                    {pubsByType['Ranked Refereed Journals'] > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Ranked Journals:</span>
+                        <span className="font-medium text-slate-800">{pubsByType['Ranked Refereed Journals']}</span>
+                      </div>
+                    )}
+                    {pubsByType['Non-Ranked Refereed Journals'] > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Other Journals:</span>
+                        <span className="font-medium text-slate-800">{pubsByType['Non-Ranked Refereed Journals']}</span>
+                      </div>
+                    )}
+                    {pubsByType['Conference Papers'] > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Conferences:</span>
+                        <span className="font-medium text-slate-800">{pubsByType['Conference Papers']}</span>
+                      </div>
+                    )}
+                    {pubsByType.Other > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Other:</span>
+                        <span className="font-medium text-slate-800">{pubsByType.Other}</span>
+                      </div>
+                    )}
+                    {person.publications.length === 0 && (
+                      <div className="text-slate-500 italic">No publications</div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pt-3 border-t border-slate-200">

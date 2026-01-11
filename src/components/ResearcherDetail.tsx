@@ -117,6 +117,38 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
     return 'text-slate-500';
   };
 
+  const categorizePublicationType = (type: string | undefined): string => {
+    if (!type) return 'Other Publications';
+    const lowerType = type.toLowerCase();
+
+    if (lowerType.includes('book')) return 'Books';
+    if (lowerType.includes('conference') || lowerType.includes('proceeding')) return 'Conference Papers';
+    if (lowerType.includes('ranked') || lowerType.includes('q1') || lowerType.includes('q2')) {
+      return 'Articles in Ranked Refereed Journals';
+    }
+    if (lowerType.includes('journal') || lowerType.includes('article')) {
+      return 'Articles in Non-Ranked Refereed Journals';
+    }
+    return 'Other Publications';
+  };
+
+  const groupPublicationsByType = (publications: any[]) => {
+    const groups: { [key: string]: any[] } = {
+      'Books': [],
+      'Articles in Ranked Refereed Journals': [],
+      'Articles in Non-Ranked Refereed Journals': [],
+      'Conference Papers': [],
+      'Other Publications': [],
+    };
+
+    publications.forEach((pub) => {
+      const category = categorizePublicationType(pub.publication_type);
+      groups[category].push(pub);
+    });
+
+    return groups;
+  };
+
   const deleteDetails = [
     'Personal profile',
     `${researcher.publications?.length || 0} publications`,
@@ -230,68 +262,86 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
         </div>
       )}
 
-      {sortedPublications.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <FileText className="w-6 h-6 text-cyan-600" />
-              <h2 className="text-2xl font-bold text-slate-800">
-                Publications ({sortedPublications.length})
-              </h2>
-            </div>
-            <select
-              value={pubSort}
-              onChange={(e) => setPubSort(e.target.value as any)}
-              className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            >
-              <option value="year-desc">Year (newest first)</option>
-              <option value="year-asc">Year (oldest first)</option>
-              <option value="citations">Citations (highest first)</option>
-            </select>
-          </div>
-          <div className="space-y-4">
-            {sortedPublications.map((pub: any, index: number) => (
-              <div
-                key={index}
-                className="border-l-4 border-cyan-500 pl-4 py-2 hover:bg-slate-50 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className={getPublicationAge(pub.publication_year)}>
-                    {getPublicationIcon(pub.publication_type)}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-slate-800">{pub.title}</h3>
-                    <p className="text-sm text-slate-600 mt-1">
-                      {pub.venue_name && <span>{pub.venue_name}</span>}
-                      {pub.volume && <span>, Vol. {pub.volume}</span>}
-                      {pub.issue && <span>({pub.issue})</span>}
-                      {pub.pages && <span>, pp. {pub.pages}</span>}
-                      <span className={`ml-2 font-medium ${getPublicationAge(pub.publication_year)}`}>
-                        ({pub.publication_year})
-                      </span>
-                    </p>
-                    {pub.citation_count !== null && pub.citation_count > 0 && (
-                      <p className="text-sm text-slate-500 mt-1">
-                        Cited {pub.citation_count} times
-                      </p>
-                    )}
-                    {pub.url && (
-                      <a
-                        href={pub.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-cyan-600 hover:text-cyan-700 mt-1 inline-block"
-                      >
-                        View publication →
-                      </a>
-                    )}
-                  </div>
-                </div>
+      {sortedPublications.length > 0 && (() => {
+        const groupedPubs = groupPublicationsByType(sortedPublications);
+
+        return (
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <FileText className="w-6 h-6 text-cyan-600" />
+                <h2 className="text-2xl font-bold text-slate-800">
+                  Publications ({sortedPublications.length})
+                </h2>
               </div>
-            ))}
+              <select
+                value={pubSort}
+                onChange={(e) => setPubSort(e.target.value as any)}
+                className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              >
+                <option value="year-desc">Year (newest first)</option>
+                <option value="year-asc">Year (oldest first)</option>
+                <option value="citations">Citations (highest first)</option>
+              </select>
+            </div>
+
+            <div className="space-y-8">
+              {Object.entries(groupedPubs).map(([category, pubs]) => {
+                if (pubs.length === 0) return null;
+
+                return (
+                  <div key={category}>
+                    <h3 className="text-lg font-bold text-slate-700 mb-4 pb-2 border-b border-slate-200">
+                      {category} ({pubs.length})
+                    </h3>
+                    <div className="space-y-4">
+                      {pubs.map((pub: any, index: number) => (
+                        <div
+                          key={index}
+                          className="border-l-4 border-cyan-500 pl-4 py-2 hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={getPublicationAge(pub.publication_year)}>
+                              {getPublicationIcon(pub.publication_type)}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-slate-800">{pub.title}</h4>
+                              <p className="text-sm text-slate-600 mt-1">
+                                {pub.venue_name && <span>{pub.venue_name}</span>}
+                                {pub.volume && <span>, Vol. {pub.volume}</span>}
+                                {pub.issue && <span>({pub.issue})</span>}
+                                {pub.pages && <span>, pp. {pub.pages}</span>}
+                                <span className={`ml-2 font-medium ${getPublicationAge(pub.publication_year)}`}>
+                                  ({pub.publication_year})
+                                </span>
+                              </p>
+                              {pub.citation_count !== null && pub.citation_count > 0 && (
+                                <p className="text-sm text-slate-500 mt-1">
+                                  Cited {pub.citation_count} times
+                                </p>
+                              )}
+                              {pub.url && (
+                                <a
+                                  href={pub.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-cyan-600 hover:text-cyan-700 mt-1 inline-block"
+                                >
+                                  View publication →
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {researcher.experience && researcher.experience.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
