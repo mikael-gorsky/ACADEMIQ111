@@ -352,11 +352,15 @@ Extract:
 The person's name is usually at the TOP of the CV. Handle titles like Ph.D., Dr., Prof. correctly.
 Example: "Vadim Talis Ph.D." → firstName: "Vadim", lastName: "Talis"
 
-For education, extract EVERY degree/certification. Look for:
-- Years (e.g., "1984-1989", "1994-2002")
-- Degree types
-- Institution names
-- Award years
+For education, extract EVERY degree/certification - search the ENTIRE document carefully:
+- Look in sections titled "EDUCATION", "ACADEMIC BACKGROUND", "QUALIFICATIONS", etc.
+- Look for ALL degrees: B.A., B.Sc., M.A., M.Sc., MBA, Ph.D., PostDoc, etc.
+- Extract study periods (e.g., "1984-1989", "1994-2002")
+- Extract institution names (including city and country)
+- Extract degree subject/field
+- Extract award/graduation years
+- Extract honors if mentioned (e.g., "summa cum laude", "with distinction")
+- IMPORTANT: Create a SEPARATE education entry for EACH degree listed
 
 Return ONLY valid JSON:
 {
@@ -395,7 +399,7 @@ Return ONLY valid JSON:
   ]
 }`;
 
-  const userMessage = `Parse this CV. Extract personal info, ALL education, and ALL experience.\n\n${truncatedCV}`;
+  const userMessage = `Parse this CV. Extract personal info, ALL education entries (create a separate entry for EACH degree - B.Sc., M.Sc., Ph.D., etc.), and ALL experience.\n\nIMPORTANT: Look through the ENTIRE CV to find ALL degrees. Don't stop after finding the first one.\n\n${truncatedCV}`;
 
   console.log("Stage 1: Parsing personal, education, and experience...");
   const baseData = await callOpenAI(systemPrompt, userMessage);

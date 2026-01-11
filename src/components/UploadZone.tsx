@@ -33,10 +33,11 @@ const playCompleteSound = () => {
 
 interface FileUpload {
   file: File;
-  status: 'pending' | 'uploading' | 'parsing' | 'completed' | 'error' | 'duplicate';
+  status: 'pending' | 'uploading' | 'extracting' | 'identifying' | 'chunking' | 'parsing-base' | 'parsing-pubs' | 'finalizing' | 'completed' | 'error' | 'duplicate';
   uploadedFilename?: string;
   parsedData?: ParsedCVData;
   error?: string;
+  progressDetail?: string;
   duplicateInfo?: {
     id: string;
     name: string;
@@ -101,17 +102,66 @@ export default function UploadZone() {
       try {
         const filename = await uploadPDF(fileUpload.file);
 
+        // Extracting text
         setFileQueue(prev => {
           const updated = [...prev];
           updated[queueIndex] = {
             ...updated[queueIndex],
-            status: 'parsing',
-            uploadedFilename: filename
+            status: 'extracting',
+            uploadedFilename: filename,
+            progressDetail: 'Extracting text from PDF...'
+          };
+          return updated;
+        });
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Identifying sections
+        setFileQueue(prev => {
+          const updated = [...prev];
+          updated[queueIndex] = {
+            ...updated[queueIndex],
+            status: 'identifying',
+            progressDetail: 'Identifying CV sections...'
+          };
+          return updated;
+        });
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Chunking
+        setFileQueue(prev => {
+          const updated = [...prev];
+          updated[queueIndex] = {
+            ...updated[queueIndex],
+            status: 'chunking',
+            progressDetail: 'Chunking publications...'
+          };
+          return updated;
+        });
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Parsing base data
+        setFileQueue(prev => {
+          const updated = [...prev];
+          updated[queueIndex] = {
+            ...updated[queueIndex],
+            status: 'parsing-base',
+            progressDetail: 'Parsing personal info and education...'
           };
           return updated;
         });
 
         const parsedData = await parseCV(filename);
+
+        // Finalizing
+        setFileQueue(prev => {
+          const updated = [...prev];
+          updated[queueIndex] = {
+            ...updated[queueIndex],
+            status: 'finalizing',
+            progressDetail: 'Saving to database...'
+          };
+          return updated;
+        });
 
         // No duplicate check since we don't store email
 
@@ -163,7 +213,12 @@ export default function UploadZone() {
     switch (status) {
       case 'pending': return 'bg-slate-100 text-slate-600';
       case 'uploading': return 'bg-amber-100 text-amber-700';
-      case 'parsing': return 'bg-cyan-100 text-cyan-700';
+      case 'extracting': return 'bg-blue-100 text-blue-700';
+      case 'identifying': return 'bg-indigo-100 text-indigo-700';
+      case 'chunking': return 'bg-purple-100 text-purple-700';
+      case 'parsing-base': return 'bg-cyan-100 text-cyan-700';
+      case 'parsing-pubs': return 'bg-teal-100 text-teal-700';
+      case 'finalizing': return 'bg-lime-100 text-lime-700';
       case 'completed': return 'bg-emerald-100 text-emerald-700';
       case 'duplicate': return 'bg-amber-100 text-amber-700';
       case 'error': return 'bg-red-100 text-red-700';
@@ -175,7 +230,12 @@ export default function UploadZone() {
     switch (status) {
       case 'pending': return 'Queued';
       case 'uploading': return 'Uploading...';
-      case 'parsing': return 'Analyzing...';
+      case 'extracting': return 'Extracting...';
+      case 'identifying': return 'Identifying...';
+      case 'chunking': return 'Chunking...';
+      case 'parsing-base': return 'Parsing...';
+      case 'parsing-pubs': return 'Parsing...';
+      case 'finalizing': return 'Finalizing...';
       case 'completed': return 'Completed';
       case 'duplicate': return 'Duplicate';
       case 'error': return 'Error';
@@ -185,7 +245,9 @@ export default function UploadZone() {
 
   const completedCount = fileQueue.filter(f => f.status === 'completed').length;
   const uploadingCount = fileQueue.filter(f => f.status === 'uploading').length;
-  const parsingCount = fileQueue.filter(f => f.status === 'parsing').length;
+  const parsingCount = fileQueue.filter(f =>
+    ['extracting', 'identifying', 'chunking', 'parsing-base', 'parsing-pubs', 'finalizing'].includes(f.status)
+  ).length;
 
   return (
     <div className="space-y-8">
@@ -265,10 +327,16 @@ export default function UploadZone() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span className={`px-4 py-2 rounded-full text-xs font-bold ${getStatusColor(fileUpload.status)}`}>
                     {getStatusText(fileUpload.status)}
                   </span>
+
+                  {fileUpload.progressDetail && (
+                    <div className="text-xs text-slate-600 font-medium italic">
+                      {fileUpload.progressDetail}
+                    </div>
+                  )}
 
                   {fileUpload.status === 'duplicate' && fileUpload.duplicateInfo && (
                     <div className="text-xs text-amber-700 font-semibold">
