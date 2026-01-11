@@ -276,14 +276,24 @@ Rules:
 - Venue/Journal name follows the title
 - Volume(Issue), Pages: "19(1), 15-36" means volume="19", issue="1", pages="15-36"
 - If you can't parse a field, use null
-- Publication type: "journal" for journal articles, "conference" for conference papers, "book" for book chapters
+
+PUBLICATION TYPE - VERY IMPORTANT:
+Look for ranking indicators in the text:
+- If you see "WoS: Q1" or "SCImago: Q1" or "IF:" with high value (>3) → "Ranked Journal Article (Q1)"
+- If you see "WoS: Q2" or "SCImago: Q2" → "Ranked Journal Article (Q2)"
+- If you see "WoS: Q3" or "SCImago: Q3" → "Ranked Journal Article (Q3)"
+- If journal name contains "IEEE Transactions" or "ACM Transactions" → "Ranked Journal Article"
+- If section header says "Ranked" or "Refereed" with ranking info → extract the ranking
+- For conference papers (FOCS, STOC, AAAI, EC, etc.) → "Conference Paper"
+- For book chapters → "Book Chapter"
+- For journal articles with no ranking info → "Journal Article"
 
 Return JSON with ALL publications:
 {
   "publications": [
     {
       "title": "string",
-      "publicationType": "journal|conference|book",
+      "publicationType": "Ranked Journal Article (Q1)|Ranked Journal Article (Q2)|Ranked Journal Article (Q3)|Ranked Journal Article|Journal Article|Conference Paper|Book Chapter",
       "venueName": "string or null",
       "publicationYear": number,
       "volume": "string or null",

@@ -122,8 +122,8 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
     const lowerType = type.toLowerCase();
 
     if (lowerType.includes('book')) return 'Books';
-    if (lowerType.includes('conference') || lowerType.includes('proceeding')) return 'Conference Papers';
-    if (lowerType.includes('ranked') || lowerType.includes('q1') || lowerType.includes('q2')) {
+    if (lowerType.includes('conference')) return 'Conference Papers';
+    if (lowerType.includes('ranked') && (lowerType.includes('q1') || lowerType.includes('q2') || lowerType.includes('q3') || lowerType.includes('journal'))) {
       return 'Articles in Ranked Refereed Journals';
     }
     if (lowerType.includes('journal') || lowerType.includes('article')) {
