@@ -113,7 +113,7 @@ export default function UploadZone() {
 
         const parsedData = await parseCV(filename);
 
-        await checkDuplicateCV(parsedData.personal.email);
+        // No duplicate check since we don't store email
 
         await saveParsedCV(parsedData, filename);
 

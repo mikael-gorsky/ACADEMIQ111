@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   ArrowLeft,
-  Mail,
-  Phone,
   Calendar,
   GraduationCap,
   FileText,
@@ -194,26 +192,9 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
                 )}
               </p>
             )}
-            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-sm md:text-base text-slate-600">
-              {researcher.email && (
-                <a
-                  href={`mailto:${researcher.email}`}
-                  className="flex items-center gap-2 hover:text-cyan-600 transition-colors break-all"
-                >
-                  <Mail className="w-4 h-4 flex-shrink-0" />
-                  <span className="break-all">{researcher.email}</span>
-                </a>
-              )}
-              {researcher.phone && (
-                <span className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 flex-shrink-0" />
-                  {researcher.phone}
-                </span>
-              )}
-              <span className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 flex-shrink-0" />
-                Indexed on {new Date(researcher.imported_at).toLocaleDateString()}
-              </span>
+            <div className="flex items-center gap-2 text-sm md:text-base text-slate-600">
+              <Calendar className="w-4 h-4 flex-shrink-0" />
+              Indexed on {new Date(researcher.imported_at).toLocaleDateString()}
             </div>
           </div>
 

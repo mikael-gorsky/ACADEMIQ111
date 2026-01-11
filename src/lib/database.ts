@@ -109,7 +109,7 @@ export async function insertCV(formData: CVFormData): Promise<string> {
 
   if (personError) {
     if (personError.code === '23505') {
-      throw new Error(`This CV has already been indexed. A person with email "${normalizedEmail}" already exists in the database.`);
+      throw new Error(`This CV has already been indexed.`);
     }
     throw personError;
   }
@@ -615,17 +615,16 @@ export async function checkDuplicateCV(email: string | null): Promise<void> {
 }
 
 export async function saveParsedCV(parsedData: ParsedCVData, pdfFilename: string): Promise<string> {
-  await checkDuplicateCV(parsedData.personal.email);
-
-  const normalizedEmail = parsedData.personal.email ? parsedData.personal.email.trim().toLowerCase() : null;
+  // Don't check for duplicate based on email since we're not storing it
+  // await checkDuplicateCV(parsedData.personal.email);
 
   const { data: person, error: personError } = await supabase
     .from('academiq_persons')
     .insert({
       first_name: parsedData.personal.firstName,
       last_name: parsedData.personal.lastName,
-      email: normalizedEmail,
-      phone: parsedData.personal.phone,
+      email: null, // Don't store email for privacy
+      phone: null, // Don't store phone for privacy
       birth_year: parsedData.personal.birthYear,
       birth_country: parsedData.personal.birthCountry,
       marital_status: parsedData.personal.maritalStatus,
@@ -637,7 +636,7 @@ export async function saveParsedCV(parsedData: ParsedCVData, pdfFilename: string
 
   if (personError) {
     if (personError.code === '23505') {
-      throw new Error(`This CV has already been indexed. A person with email "${normalizedEmail}" already exists in the database.`);
+      throw new Error(`This CV has already been indexed.`);
     }
     throw personError;
   }
