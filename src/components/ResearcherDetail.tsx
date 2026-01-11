@@ -171,62 +171,63 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-slate-200">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-cyan-600 hover:text-cyan-700 font-medium mb-6 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-          Back to Indexed Researchers
+          <span className="hidden sm:inline">Back to Indexed Researchers</span>
+          <span className="sm:hidden">Back</span>
         </button>
 
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-4">
           <div className="flex-1">
-            <h1 className="text-4xl font-bold text-blue-900 mb-2">
+            <h1 className="text-2xl md:text-4xl font-bold text-blue-900 mb-2">
               {researcher.first_name} {researcher.last_name}
             </h1>
             {currentPosition && (
-              <p className="text-xl text-slate-700 mb-4">
+              <p className="text-lg md:text-xl text-slate-700 mb-4">
                 {currentPosition.position_title}
                 {currentPosition.institution && (
                   <span className="text-slate-500"> at {currentPosition.institution}</span>
                 )}
               </p>
             )}
-            <div className="flex flex-wrap gap-4 text-slate-600">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-sm md:text-base text-slate-600">
               {researcher.email && (
                 <a
                   href={`mailto:${researcher.email}`}
-                  className="flex items-center gap-2 hover:text-cyan-600 transition-colors"
+                  className="flex items-center gap-2 hover:text-cyan-600 transition-colors break-all"
                 >
-                  <Mail className="w-4 h-4" />
-                  {researcher.email}
+                  <Mail className="w-4 h-4 flex-shrink-0" />
+                  <span className="break-all">{researcher.email}</span>
                 </a>
               )}
               {researcher.phone && (
                 <span className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
+                  <Phone className="w-4 h-4 flex-shrink-0" />
                   {researcher.phone}
                 </span>
               )}
               <span className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-4 h-4 flex-shrink-0" />
                 Indexed on {new Date(researcher.imported_at).toLocaleDateString()}
               </span>
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setShowEditModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors flex-1 sm:flex-initial"
             >
               <Edit className="w-4 h-4" />
               Edit
             </button>
             <button
               onClick={() => setShowDeleteDialog(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex-1 sm:flex-initial"
             >
               <Trash2 className="w-4 h-4" />
               Delete
@@ -236,10 +237,10 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
       </div>
 
       {sortedEducation.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-slate-200">
           <div className="flex items-center gap-2 mb-6">
             <GraduationCap className="w-6 h-6 text-cyan-600" />
-            <h2 className="text-2xl font-bold text-slate-800">Education</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Education</h2>
           </div>
           <div className="space-y-4">
             {sortedEducation.map((edu: any, index: number) => (
@@ -278,18 +279,18 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
         const groupedPubs = groupPublicationsByType(sortedPublications);
 
         return (
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-slate-200">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
               <div className="flex items-center gap-2">
                 <FileText className="w-6 h-6 text-cyan-600" />
-                <h2 className="text-2xl font-bold text-slate-800">
+                <h2 className="text-xl md:text-2xl font-bold text-slate-800">
                   Publications ({sortedPublications.length})
                 </h2>
               </div>
               <select
                 value={pubSort}
                 onChange={(e) => setPubSort(e.target.value as any)}
-                className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 w-full sm:w-auto"
               >
                 <option value="year-desc">Year (newest first)</option>
                 <option value="year-asc">Year (oldest first)</option>
@@ -356,10 +357,10 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
       })()}
 
       {researcher.experience && researcher.experience.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-slate-200">
           <div className="flex items-center gap-2 mb-6">
             <Briefcase className="w-6 h-6 text-cyan-600" />
-            <h2 className="text-2xl font-bold text-slate-800">Professional Experience</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Professional Experience</h2>
           </div>
           <div className="space-y-4">
             {researcher.experience
@@ -369,8 +370,8 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
                 return dateB - dateA;
               })
               .map((exp: any, index: number) => (
-                <div key={index} className="flex gap-4">
-                  <div className="text-sm text-slate-600 min-w-[140px]">
+                <div key={index} className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                  <div className="text-sm text-slate-600 sm:min-w-[140px]">
                     {exp.start_date && new Date(exp.start_date).getFullYear()}
                     {' - '}
                     {exp.end_date ? (
@@ -396,10 +397,10 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
       )}
 
       {researcher.grants && researcher.grants.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
+        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-slate-200">
           <div className="flex items-center gap-2 mb-6">
             <DollarSign className="w-6 h-6 text-cyan-600" />
-            <h2 className="text-2xl font-bold text-slate-800">Research Grants</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Research Grants</h2>
           </div>
           <div className="grid md:grid-cols-2 gap-4">
             {researcher.grants

@@ -9,8 +9,10 @@ import {
   ArrowRight,
   TrendingUp,
   Trash2,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
-import { getAllPersons, deletePerson } from '../lib/database';
+import { getAllPersons, deletePerson, deleteMultiplePersons, deleteAllPersons } from '../lib/database';
 import ConfirmDialog from './ui/ConfirmDialog';
 import { useToast } from './ui/Toast';
 
@@ -32,6 +34,7 @@ interface PersonData {
     title: string;
     citation_count?: number;
     publication_year: number;
+    publication_type?: string;
   }>;
   experience: Array<{
     position_title: string;
@@ -54,6 +57,9 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [personToDelete, setPersonToDelete] = useState<PersonData | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const [sortBy, setSortBy] = useState<
     | 'name-asc'
     | 'name-desc'
@@ -279,6 +285,57 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
     }
   };
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredAndSortedCVs.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredAndSortedCVs.map(p => p.id)));
+    }
+  };
+
+  const toggleSelectPerson = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      const idsToDelete = Array.from(selectedIds);
+      await deleteMultiplePersons(idsToDelete);
+      setPersons(prev => prev.filter(p => !selectedIds.has(p.id)));
+      showToast(`${idsToDelete.length} researcher(s) deleted successfully`, 'success');
+      setSelectedIds(new Set());
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to delete researchers',
+        'error'
+      );
+    } finally {
+      setShowBulkDeleteDialog(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      await deleteAllPersons();
+      setPersons([]);
+      showToast('All researchers deleted successfully', 'success');
+      setSelectedIds(new Set());
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Failed to delete all researchers',
+        'error'
+      );
+    } finally {
+      setShowDeleteAllDialog(false);
+    }
+  };
+
   const activeFilterCount =
     filters.degrees.length +
     (filters.pubCount !== 'all' ? 1 : 0) +
@@ -327,31 +384,29 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
   if (filteredAndSortedCVs.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
+        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-slate-200">
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="flex items-center gap-3 flex-wrap">
               <GraduationCap className="w-6 h-6 text-cyan-600" />
-              <h2 className="text-2xl font-bold text-slate-800">Indexed Researchers</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800">Indexed Researchers</h2>
             </div>
-            <div className="flex gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search indexed researchers..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-10 py-2 w-80 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search researchers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-10 py-2 w-full border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -378,25 +433,25 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-slate-200">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-center gap-3 flex-wrap">
             <GraduationCap className="w-6 h-6 text-cyan-600" />
-            <h2 className="text-2xl font-bold text-slate-800">Indexed Researchers</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Indexed Researchers</h2>
             <span className="px-3 py-1 bg-cyan-100 text-cyan-800 rounded-full text-sm font-semibold">
               {filteredAndSortedCVs.length} {filteredAndSortedCVs.length === 1 ? 'researcher' : 'researchers'}
             </span>
           </div>
 
-          <div className="flex gap-3">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search indexed researchers..."
+                placeholder="Search researchers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-10 py-2 w-80 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="pl-10 pr-10 py-2 w-full border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
               {searchTerm && (
                 <button
@@ -409,14 +464,14 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
+              className={`flex items-center justify-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
                 showFilters || activeFilterCount > 0
                   ? 'border-cyan-500 bg-cyan-50 text-cyan-700'
                   : 'border-slate-300 hover:bg-slate-50'
               }`}
             >
               <Filter className="w-5 h-5" />
-              Filters
+              <span className="whitespace-nowrap">Filters</span>
               {activeFilterCount > 0 && (
                 <span className="px-2 py-0.5 bg-cyan-600 text-white rounded-full text-xs font-semibold">
                   {activeFilterCount}
@@ -518,14 +573,14 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
           <div className="text-sm text-slate-600">
             Showing {filteredAndSortedCVs.length} of {persons.length} researchers
           </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 w-full sm:w-auto"
           >
             <option value="date-new">Import Date (newest first)</option>
             <option value="date-old">Import Date (oldest first)</option>
@@ -537,6 +592,47 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
           </select>
         </div>
 
+        {filteredAndSortedCVs.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={toggleSelectAll}
+                className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 rounded-lg hover:bg-white transition-colors text-sm"
+              >
+                {selectedIds.size === filteredAndSortedCVs.length ? (
+                  <CheckSquare className="w-4 h-4 text-cyan-600" />
+                ) : (
+                  <Square className="w-4 h-4" />
+                )}
+                <span className="whitespace-nowrap">Select All</span>
+              </button>
+              {selectedIds.size > 0 && (
+                <span className="text-sm text-slate-600 whitespace-nowrap">
+                  {selectedIds.size} selected
+                </span>
+              )}
+            </div>
+            <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+              {selectedIds.size > 0 && (
+                <button
+                  onClick={() => setShowBulkDeleteDialog(true)}
+                  className="flex items-center justify-center gap-2 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium flex-1 sm:flex-initial"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="whitespace-nowrap">Delete Selected ({selectedIds.size})</span>
+                </button>
+              )}
+              <button
+                onClick={() => setShowDeleteAllDialog(true)}
+                className="flex items-center justify-center gap-2 px-4 py-1.5 border border-red-600 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium flex-1 sm:flex-initial"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="whitespace-nowrap">Delete All</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredAndSortedCVs.map((person) => {
             const position = getCurrentPosition(person);
@@ -544,12 +640,31 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
             const isProlific = person.publications.length >= 50;
             const pubsByType = getPublicationsByType(person);
 
+            const isSelected = selectedIds.has(person.id);
+
             return (
               <div
                 key={person.id}
                 onClick={() => onViewResearcher(person.id)}
-                className="p-4 border border-slate-200 rounded-lg cursor-pointer hover:border-cyan-400 hover:shadow-md transition-all hover:scale-[1.02] bg-white relative group"
+                className={`p-4 border rounded-lg cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] bg-white relative group ${
+                  isSelected ? 'border-cyan-500 ring-2 ring-cyan-200' : 'border-slate-200 hover:border-cyan-400'
+                }`}
               >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSelectPerson(person.id);
+                  }}
+                  className="absolute top-3 left-3 p-1 hover:bg-slate-100 rounded transition-colors z-10"
+                  title={isSelected ? 'Deselect' : 'Select'}
+                >
+                  {isSelected ? (
+                    <CheckSquare className="w-5 h-5 text-cyan-600" />
+                  ) : (
+                    <Square className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+                  )}
+                </button>
+
                 <button
                   onClick={(e) => handleDeleteClick(e, person)}
                   className="absolute top-3 right-3 p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
@@ -558,7 +673,7 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
                   <Trash2 className="w-4 h-4" />
                 </button>
 
-                <div className="flex items-start justify-between mb-3 pr-8">
+                <div className="flex items-start justify-between mb-3 pr-8 pl-8">
                   <div className="flex-1">
                     <h3 className="font-bold text-slate-800 text-lg">
                       {person.first_name} {person.last_name}
@@ -652,6 +767,28 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
         title={personToDelete ? `Delete ${personToDelete.first_name} ${personToDelete.last_name}?` : 'Delete Researcher'}
         message="This will permanently delete this researcher and all associated data from the database."
         confirmText="Delete"
+        cancelText="Cancel"
+        confirmVariant="danger"
+      />
+
+      <ConfirmDialog
+        isOpen={showBulkDeleteDialog}
+        onClose={() => setShowBulkDeleteDialog(false)}
+        onConfirm={handleBulkDelete}
+        title={`Delete ${selectedIds.size} Selected Researchers?`}
+        message={`This will permanently delete ${selectedIds.size} researcher${selectedIds.size === 1 ? '' : 's'} and all associated data from the database. This action cannot be undone.`}
+        confirmText="Delete Selected"
+        cancelText="Cancel"
+        confirmVariant="danger"
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteAllDialog}
+        onClose={() => setShowDeleteAllDialog(false)}
+        onConfirm={handleDeleteAll}
+        title="Delete All Researchers?"
+        message={`This will permanently delete all ${persons.length} researchers and all associated data from the database. This action cannot be undone.`}
+        confirmText="Delete All"
         cancelText="Cancel"
         confirmVariant="danger"
       />

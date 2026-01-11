@@ -230,6 +230,28 @@ export async function deletePerson(id: string): Promise<void> {
   }
 }
 
+export async function deleteMultiplePersons(ids: string[]): Promise<void> {
+  const { error } = await supabase
+    .from('academiq_persons')
+    .delete()
+    .in('id', ids);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function deleteAllPersons(): Promise<void> {
+  const { error } = await supabase
+    .from('academiq_persons')
+    .delete()
+    .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all by using a condition that's always true
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function updatePerson(
   id: string,
   data: {
