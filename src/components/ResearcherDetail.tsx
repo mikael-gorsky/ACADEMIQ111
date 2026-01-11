@@ -16,8 +16,9 @@ import {
   Trash2,
   Loader2,
 } from 'lucide-react';
-import { getPersonById, deletePerson } from '../lib/database';
+import { getPersonById, deletePerson, updatePerson } from '../lib/database';
 import ConfirmDialog from './ui/ConfirmDialog';
+import EditResearcherModal from './ui/EditResearcherModal';
 import { useToast } from './ui/Toast';
 
 interface ResearcherDetailProps {
@@ -32,6 +33,7 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [pubSort, setPubSort] = useState<'year-desc' | 'year-asc' | 'citations'>('year-desc');
 
   useEffect(() => {
@@ -63,6 +65,16 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
       onBack();
     } catch (err) {
       showToast('Failed to delete researcher', 'error');
+    }
+  };
+
+  const handleEdit = async (data: { firstName: string; lastName: string; positionTitle: string }) => {
+    try {
+      await updatePerson(researcherId, data);
+      showToast('Researcher updated successfully', 'success');
+      await loadResearcher(); // Reload to show updated data
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to update researcher');
     }
   };
 
@@ -206,7 +218,7 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
 
           <div className="flex gap-2">
             <button
-              onClick={() => showToast('Edit functionality coming soon', 'info')}
+              onClick={() => setShowEditModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors"
             >
               <Edit className="w-4 h-4" />
@@ -528,6 +540,17 @@ export default function ResearcherDetail({ researcherId, onBack }: ResearcherDet
           </ul>
         </div>
       )}
+
+      <EditResearcherModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleEdit}
+        initialData={{
+          firstName: researcher.first_name,
+          lastName: researcher.last_name,
+          positionTitle: currentPosition?.position_title || '',
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showDeleteDialog}

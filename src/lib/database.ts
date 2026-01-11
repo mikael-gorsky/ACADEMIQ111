@@ -230,6 +230,55 @@ export async function deletePerson(id: string): Promise<void> {
   }
 }
 
+export async function updatePerson(
+  id: string,
+  data: {
+    firstName: string;
+    lastName: string;
+    positionTitle?: string;
+  }
+): Promise<void> {
+  // Update person's name
+  const { error: personError } = await supabase
+    .from('academiq_persons')
+    .update({
+      first_name: data.firstName,
+      last_name: data.lastName,
+    })
+    .eq('id', id);
+
+  if (personError) {
+    throw personError;
+  }
+
+  // Update current position if provided
+  if (data.positionTitle && data.positionTitle.trim()) {
+    // Find current position (experience with no end_date)
+    const { data: currentExp, error: fetchError } = await supabase
+      .from('academiq_experience')
+      .select('id')
+      .eq('person_id', id)
+      .is('end_date', null)
+      .maybeSingle();
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    if (currentExp) {
+      // Update existing current position
+      const { error: updateError } = await supabase
+        .from('academiq_experience')
+        .update({ position_title: data.positionTitle.trim() })
+        .eq('id', currentExp.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+    }
+  }
+}
+
 export async function getAnalyticsData() {
   const { data: persons, error: personsError } = await supabase
     .from('academiq_persons')

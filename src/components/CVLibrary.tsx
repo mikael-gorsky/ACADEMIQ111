@@ -7,7 +7,6 @@ import {
   Loader2,
   X,
   ArrowRight,
-  Sparkles,
   TrendingUp,
   Trash2,
 } from 'lucide-react';
@@ -542,7 +541,6 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
           {filteredAndSortedCVs.map((person) => {
             const position = getCurrentPosition(person);
             const lastPubYear = getLastPublicationYear(person);
-            const isRecentlyActive = lastPubYear && new Date().getFullYear() - lastPubYear <= 2;
             const isProlific = person.publications.length >= 50;
             const pubsByType = getPublicationsByType(person);
 
@@ -574,20 +572,14 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {isRecentlyActive && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-semibold">
-                      <Sparkles className="w-3 h-3" />
-                      Recently Active
-                    </span>
-                  )}
-                  {isProlific && (
+                {isProlific && (
+                  <div className="flex flex-wrap gap-2 mb-3">
                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
                       <TrendingUp className="w-3 h-3" />
                       Prolific
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 <div className="space-y-2 text-sm text-slate-700 mb-4">
                   <div className="flex items-center justify-between mb-2">
