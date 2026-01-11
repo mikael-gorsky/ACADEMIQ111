@@ -3,7 +3,6 @@ import {
   Search,
   Filter,
   BookOpen,
-  Award,
   GraduationCap,
   Loader2,
   X,
