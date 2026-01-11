@@ -215,13 +215,9 @@ export default function CVLibrary({ onViewResearcher }: CVLibraryProps) {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name-asc':
-          return `${a.first_name} ${a.last_name}`.localeCompare(
-            `${b.first_name} ${b.last_name}`
-          );
+          return a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name);
         case 'name-desc':
-          return `${b.first_name} ${b.last_name}`.localeCompare(
-            `${a.first_name} ${a.last_name}`
-          );
+          return b.last_name.localeCompare(a.last_name) || b.first_name.localeCompare(a.first_name);
         case 'date-new':
           return new Date(b.imported_at).getTime() - new Date(a.imported_at).getTime();
         case 'date-old':
